@@ -16,13 +16,14 @@ It supports:
 git clone color_program_bincom
 cd color_program_bincom
 pip install -r requirements.txt
+```
 
 ### 2. Configure PostgreSQL
 Make sure PostgreSQL is running and create a database:
 
 ```bash
 CREATE DATABASE color_program;
-
+````
 Then update the DB settings in color_program.py if needed:
 
 ```bash
@@ -31,6 +32,7 @@ DB_USER = "postgres"
 DB_PASSWORD = "your_password"
 DB_HOST = "localhost"
 DB_PORT = "5432"
+```
 
 ## Usage
 Example: Count and save colors
@@ -50,7 +52,9 @@ save_to_postgres(counter)
 
 # Fetch and display
 fetch_colors()
-Output:
+```
+
+## Output:
 ```bash
 All colors deleted (table reset).
 Colors saved/updated to PostgreSQL successfully.
@@ -71,8 +75,7 @@ Returns list of (color, frequency) tuples.
 
 reset_colors()
 Clears all rows in the colors table.
-
-Useful for testing.
+```
 
 ## Requirements
 Python 3.8+
