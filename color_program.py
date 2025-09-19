@@ -90,19 +90,81 @@ def save_to_postgres(counter):
         )
         cursor = conn.cursor()
 
-        for color, freq in counter.items():
-            cursor.execute(
-                "INSERT INTO colors (color, frequency) VALUES (%s, %s)",
-                (color, freq)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS colors (
+                id SERIAL PRIMARY KEY,
+                color VARCHAR(50) UNIQUE NOT NULL,
+                frequency INT NOT NULL
             )
+        """)
+
+        for color, freq in counter.items():
+            cursor.execute("""
+                INSERT INTO colors (color, frequency)
+                VALUES (%s, %s)
+                ON CONFLICT (color) 
+                DO UPDATE SET frequency = colors.frequency + EXCLUDED.frequency
+            """, (color, freq))
 
         conn.commit()
         cursor.close()
         conn.close()
-        print("Colors saved to PostgreSQL successfully.")
+        print("Colors saved/updated to PostgreSQL successfully.")
 
     except Exception as e:
         print("Error saving to PostgreSQL:", e)
+
+def fetch_colors():
+    try:
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT color, frequency FROM colors ORDER BY frequency DESC")
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        print("Saved Colors in DB:")
+        for color, freq in rows:
+            print(f"{color}: {freq}")
+
+        return rows
+
+    except Exception as e:
+        print("Error fetching from PostgreSQL:", e)
+        return []
+
+def reset_colors():
+    """Delete all rows from colors table."""
+    try:
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("TRUNCATE TABLE colors RESTART IDENTITY")
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        print("🗑️ All colors deleted (table reset).")
+
+    except Exception as e:
+        print("Error resetting table:", e)
+
+
+
 
 if __name__ == "__main__":
     colors = extract_colors("python_class_question.html")
@@ -115,6 +177,8 @@ if __name__ == "__main__":
     print("Probability of red:", results["prob_red"])
 
     # Save results
+    reset_colors()
     save_to_postgres(results["counter"])
+    fetch_colors()
 
     print("Finabacci sum (50 terms):", finabacci_sum())
